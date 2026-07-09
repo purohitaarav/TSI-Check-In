@@ -1,16 +1,20 @@
+export interface RegistrationGroup {
+  id: string;
+  name: string;
+  visibleFields?: string[];
+}
+
 export interface Attendee {
   id: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
+  name: string;
   searchName: string;
-  email?: string;
-  phone?: string;
-  shirtSize?: string;
+  email?: string | null;
+  phone?: string | null;
   checkedIn: boolean;
   checkedInAt?: string | null;
   checkedInBy?: string | null;
   qrToken?: string;
+  registrationGroupId: string; // The ID of the group, so renaming is easy
   registrationData?: Record<string, any>;
 }
 

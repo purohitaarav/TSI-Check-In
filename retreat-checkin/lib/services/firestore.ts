@@ -9,9 +9,10 @@ import {
   deleteDoc,
   query,
   QueryConstraint,
-  writeBatch
+  writeBatch,
+  where
 } from "firebase/firestore";
-import { Attendee } from "@/types";
+import { Attendee, RegistrationGroup } from "@/types";
 
 export const firestoreService = {
   async getAll<T>(collectionName: string, constraints: QueryConstraint[] = []): Promise<T[]> {
@@ -43,11 +44,19 @@ export const firestoreService = {
     const docRef = doc(db, collectionName, id);
     await deleteDoc(docRef);
   },
+
+  async checkInAttendee(eventId: string, attendeeId: string, userId: string): Promise<void> {
+    const docRef = doc(db, `events/${eventId}/attendees`, attendeeId);
+    await updateDoc(docRef, {
+      checkedIn: true,
+      checkedInAt: new Date().toISOString(),
+      checkedInBy: userId
+    });
+  },
   
   async batchWriteAttendees(eventId: string, attendees: Omit<Attendee, "id">[]): Promise<void> {
     const collectionRef = collection(db, `events/${eventId}/attendees`);
     
-    // Firestore batches hold up to 500 operations
     const chunks = [];
     for (let i = 0; i < attendees.length; i += 490) {
       chunks.push(attendees.slice(i, i + 490));
@@ -68,5 +77,56 @@ export const firestoreService = {
     const q = query(collectionRef);
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Attendee));
+  },
+
+  async createRegistrationGroup(eventId: string, groupName: string): Promise<string> {
+    // Generate a simple slug ID for the group that avoids collisions nicely if we append a random string
+    // but for simplicity, we use the sanitized name. If it exists, it safely overwrites the name (idempotent).
+    const groupId = groupName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    const docRef = doc(db, `events/${eventId}/registrationGroups`, groupId);
+    await setDoc(docRef, { name: groupName }, { merge: true });
+    return groupId;
+  },
+
+  async renameRegistrationGroup(eventId: string, groupId: string, newName: string): Promise<void> {
+    const docRef = doc(db, `events/${eventId}/registrationGroups`, groupId);
+    await updateDoc(docRef, { name: newName });
+  },
+
+  async getRegistrationGroups(eventId: string): Promise<RegistrationGroup[]> {
+    const collectionRef = collection(db, `events/${eventId}/registrationGroups`);
+    const q = query(collectionRef);
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RegistrationGroup));
+  },
+
+  async updateRegistrationGroupFields(eventId: string, groupId: string, fields: string[]): Promise<void> {
+    const docRef = doc(db, `events/${eventId}/registrationGroups`, groupId);
+    await updateDoc(docRef, { visibleFields: fields });
+  },
+
+  async deleteRegistrationGroup(eventId: string, groupId: string): Promise<void> {
+    // 1. Delete all attendees belonging to this group
+    const attendeesRef = collection(db, `events/${eventId}/attendees`);
+    const q = query(attendeesRef, where("registrationGroupId", "==", groupId));
+    const querySnapshot = await getDocs(q);
+    
+    // Process in batches if there are many attendees
+    const chunks = [];
+    for (let i = 0; i < querySnapshot.docs.length; i += 490) {
+      chunks.push(querySnapshot.docs.slice(i, i + 490));
+    }
+    
+    for (const chunk of chunks) {
+      const batch = writeBatch(db);
+      for (const docSnapshot of chunk) {
+        batch.delete(docSnapshot.ref);
+      }
+      await batch.commit();
+    }
+
+    // 2. Delete the group document
+    const groupRef = doc(db, `events/${eventId}/registrationGroups`, groupId);
+    await deleteDoc(groupRef);
   }
 };
