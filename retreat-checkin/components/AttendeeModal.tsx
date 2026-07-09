@@ -4,7 +4,7 @@ import { Attendee } from "@/types";
 import { Button } from "@/components/ui/button";
 import { X, CheckCircle2, User, Mail, Phone, Clock, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface AttendeeModalProps {
   isOpen: boolean;
@@ -12,11 +12,13 @@ interface AttendeeModalProps {
   attendee: Attendee | null;
   groupName: string;
   onCheckIn: (attendeeId: string) => void;
+  onUndoCheckIn?: (attendeeId: string) => void;
   isCheckingIn: boolean;
   visibleFields?: string[] | null;
 }
 
-export function AttendeeModal({ isOpen, onClose, attendee, groupName, onCheckIn, isCheckingIn, visibleFields }: AttendeeModalProps) {
+export function AttendeeModal({ isOpen, onClose, attendee, groupName, onCheckIn, onUndoCheckIn, isCheckingIn, visibleFields }: AttendeeModalProps) {
+  const [isConfirmingUndo, setIsConfirmingUndo] = useState(false);
   
   // Prevent scrolling on body when modal is open
   useEffect(() => {
@@ -28,6 +30,12 @@ export function AttendeeModal({ isOpen, onClose, attendee, groupName, onCheckIn,
     return () => {
       document.body.style.overflow = "auto";
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsConfirmingUndo(false);
+    }
   }, [isOpen]);
 
   if (!isOpen || !attendee) return null;
@@ -160,13 +168,51 @@ export function AttendeeModal({ isOpen, onClose, attendee, groupName, onCheckIn,
               {isCheckingIn ? "Processing..." : "Check In Attendee"}
             </Button>
           ) : (
-            <Button 
-              variant="outline"
-              className="w-full sm:w-auto sm:float-right h-12 sm:h-10 font-medium" 
-              onClick={onClose}
-            >
-              Close
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto sm:float-right">
+              {onUndoCheckIn && (
+                isConfirmingUndo ? (
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="destructive"
+                      className="flex-1 sm:flex-none h-12 sm:h-10 font-medium" 
+                      onClick={() => {
+                        onUndoCheckIn(attendee.id);
+                        setIsConfirmingUndo(false);
+                      }}
+                      disabled={isCheckingIn}
+                    >
+                      Confirm Undo
+                    </Button>
+                    <Button 
+                      variant="ghost"
+                      className="flex-1 sm:flex-none h-12 sm:h-10 font-medium" 
+                      onClick={() => setIsConfirmingUndo(false)}
+                      disabled={isCheckingIn}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="outline"
+                    className="w-full sm:w-auto h-12 sm:h-10 font-medium text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20" 
+                    onClick={() => setIsConfirmingUndo(true)}
+                    disabled={isCheckingIn}
+                  >
+                    Undo Check-In
+                  </Button>
+                )
+              )}
+              {!isConfirmingUndo && (
+                <Button 
+                  variant="outline"
+                  className="w-full sm:w-auto h-12 sm:h-10 font-medium" 
+                  onClick={onClose}
+                >
+                  Close
+                </Button>
+              )}
+            </div>
           )}
           <div className="clear-both"></div>
         </div>

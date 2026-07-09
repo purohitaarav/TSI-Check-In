@@ -13,6 +13,7 @@ import { ImportAttendeesModal } from "@/components/ImportAttendeesModal";
 import { AttendeeModal } from "@/components/AttendeeModal";
 import { FieldCustomizationModal } from "@/components/FieldCustomizationModal";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -20,8 +21,9 @@ export default function DashboardPage() {
   const [groups, setGroups] = useState<RegistrationGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("all");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"needs_check_in" | "checked_in" | "all">("needs_check_in");
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editingGroupName, setEditingGroupName] = useState("");
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
@@ -51,10 +53,27 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const handleOpenModal = () => setIsImportModalOpen(true);
+    window.addEventListener("open-import-modal", handleOpenModal);
+    return () => window.removeEventListener("open-import-modal", handleOpenModal);
+  }, []);
+
   const tabFilteredAttendees = useMemo(() => {
-    if (activeTab === "all") return attendees;
-    return attendees.filter(a => a.registrationGroupId === activeTab);
-  }, [attendees, activeTab]);
+    let filtered = attendees;
+    
+    if (activeTab !== "all") {
+      filtered = filtered.filter(a => a.registrationGroupId === activeTab);
+    }
+    
+    if (statusFilter === "needs_check_in") {
+      filtered = filtered.filter(a => !a.checkedIn);
+    } else if (statusFilter === "checked_in") {
+      filtered = filtered.filter(a => a.checkedIn);
+    }
+    
+    return filtered;
+  }, [attendees, activeTab, statusFilter]);
 
   const groupMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -102,30 +121,67 @@ export default function DashboardPage() {
   const handleCheckIn = async (attendeeId: string) => {
     if (!user) return;
     setIsCheckingIn(true);
+    const identifier = user.email || user.uid;
     try {
-      await firestoreService.checkInAttendee(EVENT_ID, attendeeId, user.uid);
-      setAttendees(prev => prev.map(a => {
-        if (a.id === attendeeId) {
-          return {
-            ...a,
-            checkedIn: true,
-            checkedInAt: new Date().toISOString(),
-            checkedInBy: user.uid
-          };
-        }
-        return a;
-      }));
+      await firestoreService.checkInAttendee(EVENT_ID, attendeeId, identifier);
+      setAttendees(prev => prev.map(a => 
+        a.id === attendeeId ? { ...a, checkedIn: true, checkedInAt: new Date().toISOString(), checkedInBy: identifier } : a
+      ));
       
       if (selectedAttendee?.id === attendeeId) {
         setSelectedAttendee(prev => prev ? {
           ...prev,
           checkedIn: true,
           checkedInAt: new Date().toISOString(),
-          checkedInBy: user.uid
+          checkedInBy: identifier
         } : null);
       }
+      
+      const attendee = attendees.find(a => a.id === attendeeId);
+      if (attendee) {
+        toast.success(`${attendee.name} checked in`, {
+          duration: 5000,
+          action: {
+            label: "Undo",
+            onClick: () => handleUndoCheckIn(attendeeId),
+          },
+        });
+      }
+      
     } catch (error) {
       console.error("Failed to check in attendee:", error);
+      toast.error("Failed to check in attendee");
+    } finally {
+      setIsCheckingIn(false);
+    }
+  };
+
+  const handleUndoCheckIn = async (attendeeId: string) => {
+    if (!user) return;
+    setIsCheckingIn(true);
+    const identifier = user.email || user.uid;
+    try {
+      await firestoreService.undoCheckInAttendee(EVENT_ID, attendeeId, identifier);
+      setAttendees(prev => prev.map(a => 
+        a.id === attendeeId ? { ...a, checkedIn: false, checkedInAt: null, checkedInBy: null } : a
+      ));
+      
+      if (selectedAttendee?.id === attendeeId) {
+        setSelectedAttendee(prev => prev ? {
+          ...prev,
+          checkedIn: false,
+          checkedInAt: null,
+          checkedInBy: null
+        } : null);
+      }
+      
+      const attendee = attendees.find(a => a.id === attendeeId);
+      if (attendee) {
+        toast.info(`Undid check-in for ${attendee.name}`);
+      }
+    } catch (error) {
+      console.error("Failed to undo check-in:", error);
+      toast.error("Failed to undo check-in");
     } finally {
       setIsCheckingIn(false);
     }
@@ -160,23 +216,8 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-semibold tracking-tight">Overview</h2>
-          <p className="text-sm text-muted-foreground">
-            Welcome back, {user?.displayName?.split(' ')[0] || "Volunteer"}. Here's what's happening today.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => setIsImportModalOpen(true)} className="gap-2">
-            <Download className="h-4 w-4" />
-            Import CSV
-          </Button>
-        </div>
-      </div>
-
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Attendees</CardTitle>
@@ -330,18 +371,49 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <div className="sticky top-[80px] z-20 flex items-center gap-4 bg-background/95 pb-4 pt-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="flex flex-col flex-1 bg-muted/10 p-4 sm:p-6 rounded-b-2xl border-x border-b border-border min-h-[500px]">
+        
+        <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between mb-6">
+          <div className="relative w-full max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input 
-              type="text" 
+              type="text"
+              placeholder="Search attendees..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search attendees..." 
-              className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
-          <Badge variant="outline" className="hidden sm:inline-flex h-9 px-4 rounded-lg items-center justify-center text-sm font-medium">Filter</Badge>
+          
+          <div className="flex bg-muted/50 p-1 rounded-lg border border-border self-start lg:self-auto shrink-0">
+            <button
+              onClick={() => setStatusFilter("needs_check_in")}
+              className={cn(
+                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                statusFilter === "needs_check_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Needs Check-In
+            </button>
+            <button
+              onClick={() => setStatusFilter("checked_in")}
+              className={cn(
+                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                statusFilter === "checked_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Checked In
+            </button>
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={cn(
+                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                statusFilter === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              All
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -359,6 +431,7 @@ export default function DashboardPage() {
           />
         )}
       </div>
+      </div>
 
       <ImportAttendeesModal 
         isOpen={isImportModalOpen} 
@@ -373,6 +446,7 @@ export default function DashboardPage() {
         attendee={selectedAttendee}
         groupName={selectedAttendee ? (groupMap.get(selectedAttendee.registrationGroupId) || "Unknown Group") : ""}
         onCheckIn={handleCheckIn}
+        onUndoCheckIn={handleUndoCheckIn}
         isCheckingIn={isCheckingIn}
         visibleFields={selectedAttendee ? groups.find(g => g.id === selectedAttendee.registrationGroupId)?.visibleFields : undefined}
       />

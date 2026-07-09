@@ -23,3 +23,11 @@ export interface UserState {
   email: string | null;
   displayName: string | null;
 }
+
+export interface CheckInLog {
+  id?: string;
+  attendeeId: string;
+  action: "check_in" | "undo_check_in";
+  timestamp: string;
+  userId: string;
+}

@@ -46,12 +46,51 @@ export const firestoreService = {
   },
 
   async checkInAttendee(eventId: string, attendeeId: string, userId: string): Promise<void> {
-    const docRef = doc(db, `events/${eventId}/attendees`, attendeeId);
-    await updateDoc(docRef, {
+    const batch = writeBatch(db);
+    
+    // 1. Update attendee
+    const attendeeRef = doc(db, `events/${eventId}/attendees`, attendeeId);
+    const timestamp = new Date().toISOString();
+    batch.update(attendeeRef, {
       checkedIn: true,
-      checkedInAt: new Date().toISOString(),
+      checkedInAt: timestamp,
       checkedInBy: userId
     });
+
+    // 2. Create history log
+    const logRef = doc(collection(db, `events/${eventId}/checkins`));
+    batch.set(logRef, {
+      attendeeId,
+      action: "check_in",
+      timestamp,
+      userId
+    });
+
+    await batch.commit();
+  },
+
+  async undoCheckInAttendee(eventId: string, attendeeId: string, userId: string): Promise<void> {
+    const batch = writeBatch(db);
+    
+    // 1. Revert attendee
+    const attendeeRef = doc(db, `events/${eventId}/attendees`, attendeeId);
+    const timestamp = new Date().toISOString();
+    batch.update(attendeeRef, {
+      checkedIn: false,
+      checkedInAt: null,
+      checkedInBy: null
+    });
+
+    // 2. Create history log
+    const logRef = doc(collection(db, `events/${eventId}/checkins`));
+    batch.set(logRef, {
+      attendeeId,
+      action: "undo_check_in",
+      timestamp,
+      userId
+    });
+
+    await batch.commit();
   },
   
   async batchWriteAttendees(eventId: string, attendees: Omit<Attendee, "id">[]): Promise<void> {

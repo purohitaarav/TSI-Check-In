@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+import { Download } from "lucide-react";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -25,8 +27,13 @@ export default function DashboardLayout({
           </div>
           
           <div className="flex items-center gap-4">
+            <Button onClick={() => window.dispatchEvent(new Event('open-import-modal'))} className="gap-2 h-9" size="sm">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Import CSV</span>
+            </Button>
+            <div className="h-4 w-px bg-border mx-1" />
             <ThemeToggle />
-            <div className="h-4 w-px bg-border hidden sm:block" />
+            <div className="h-4 w-px bg-border hidden sm:block mx-1" />
             <span className="hidden text-sm font-medium text-muted-foreground sm:inline-block">
               {user?.displayName || user?.email}
             </span>
