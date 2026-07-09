@@ -7,7 +7,7 @@ import { UploadCloud, X, FileText, CheckCircle2, AlertCircle } from "lucide-reac
 import Papa from "papaparse";
 import { csvAttendeeSchema, generateSearchName } from "@/lib/utils/csv-schema";
 import { firestoreService } from "@/lib/services/firestore";
-import { Attendee } from "@/types";
+import { Attendee } from "@/types/index";
 
 interface ImportAttendeesModalProps {
   isOpen: boolean;
@@ -65,19 +65,19 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
 
     try {
       let totalImported = 0;
-      
+
       for (const file of files) {
         const groupName = file.name.replace(/\.csv$/i, "");
         const data = await parseFile(file);
-        
+
         // 1. Create the Registration Group tab and get its ID
         const groupId = await firestoreService.createRegistrationGroup(eventId, groupName);
 
         const validAttendees: Omit<Attendee, "id">[] = [];
-        
+
         for (const row of data) {
           const nameKey = findColumnKey(row, "name", "fullname", "full name", "primary guest name");
-          
+
           if (!nameKey || !row[nameKey]) {
             console.warn(`Skipping row without a Name in ${file.name}:`, row);
             continue;
@@ -91,7 +91,7 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
           const phone = phoneKey && row[phoneKey] ? row[phoneKey] : null;
 
           const parsed = csvAttendeeSchema.safeParse({ Name: rawName });
-          
+
           if (parsed.success) {
             validAttendees.push({
               name: rawName,
@@ -117,20 +117,20 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
           console.warn(`No valid attendees found in ${file.name}`);
         }
       }
-      
+
       if (totalImported === 0) {
         throw new Error("No valid attendees found in any of the uploaded files. Ensure they all have a 'Name' column.");
       }
 
       setSuccessCount(totalImported);
-      
+
       setTimeout(() => {
         onSuccess();
         onClose();
         setFiles([]);
         setSuccessCount(0);
       }, 2000);
-      
+
     } catch (err: any) {
       setError(err.message || "Failed to upload attendees");
     } finally {
@@ -142,10 +142,10 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
       <Card className="w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200 border-border">
         <CardHeader className="relative">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="absolute right-4 top-4 rounded-full" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-4 rounded-full"
             onClick={onClose}
             disabled={isUploading}
           >
@@ -154,10 +154,10 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
           <CardTitle>Import Attendees</CardTitle>
           <CardDescription>Upload multiple CSV files. Each filename will be a registration group.</CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           {!successCount && (
-            <div 
+            <div
               className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-8 transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer mb-4"
               onClick={() => fileInputRef.current?.click()}
             >
@@ -200,20 +200,20 @@ export function ImportAttendeesModal({ isOpen, onClose, onSuccess, eventId = "de
             </div>
           )}
 
-          <input 
-            type="file" 
-            accept=".csv" 
+          <input
+            type="file"
+            accept=".csv"
             multiple
-            className="hidden" 
-            ref={fileInputRef} 
+            className="hidden"
+            ref={fileInputRef}
             onChange={handleFileChange}
           />
         </CardContent>
 
         <CardFooter className="flex justify-end gap-3 border-t bg-muted/20 px-6 py-4">
           <Button variant="ghost" onClick={onClose} disabled={isUploading}>Cancel</Button>
-          <Button 
-            onClick={handleImport} 
+          <Button
+            onClick={handleImport}
             disabled={files.length === 0 || isUploading || successCount > 0}
           >
             {isUploading ? "Importing..." : `Import ${files.length} CSV${files.length !== 1 ? 's' : ''}`}

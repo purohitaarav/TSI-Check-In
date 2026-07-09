@@ -1,6 +1,6 @@
 "use client";
 
-import { Attendee } from "@/types";
+import { Attendee } from "@/types/index";
 import { Card, CardContent } from "@/components/ui/card";
 import { User } from "lucide-react";
 import { QuickCheckInButton } from "./QuickCheckInButton";
@@ -14,15 +14,15 @@ interface AttendeeListProps {
   isCheckingIn: boolean;
 }
 
-export function AttendeeList({ 
-  attendees, 
-  searchQuery, 
-  groupMap, 
+export function AttendeeList({
+  attendees,
+  searchQuery,
+  groupMap,
   onSelectAttendee,
   onCheckIn,
   isCheckingIn
 }: AttendeeListProps) {
-  
+
   const filtered = attendees.filter(a => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -66,8 +66,8 @@ export function AttendeeList({
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map(attendee => (
-                <tr 
-                  key={attendee.id} 
+                <tr
+                  key={attendee.id}
                   className="hover:bg-muted/50 cursor-pointer transition-colors group"
                   onClick={() => onSelectAttendee?.(attendee)}
                 >
@@ -82,10 +82,10 @@ export function AttendeeList({
                   </td>
                   <td className="px-5 py-3 text-right">
                     <div className="flex justify-end">
-                      <QuickCheckInButton 
-                        attendee={attendee} 
-                        onCheckIn={onCheckIn} 
-                        isCheckingIn={isCheckingIn} 
+                      <QuickCheckInButton
+                        attendee={attendee}
+                        onCheckIn={onCheckIn}
+                        isCheckingIn={isCheckingIn}
                       />
                     </div>
                   </td>
@@ -104,7 +104,7 @@ export function AttendeeList({
               <div className="flex flex-col">
                 <p className="font-semibold text-base">{attendee.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
-                
+
                 {(attendee.email || attendee.phone) && (
                   <div className="mt-2 text-sm text-muted-foreground">
                     {attendee.email && <div>{attendee.email}</div>}
@@ -114,10 +114,10 @@ export function AttendeeList({
               </div>
 
               <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
-                <QuickCheckInButton 
-                  attendee={attendee} 
-                  onCheckIn={onCheckIn} 
-                  isCheckingIn={isCheckingIn} 
+                <QuickCheckInButton
+                  attendee={attendee}
+                  onCheckIn={onCheckIn}
+                  isCheckingIn={isCheckingIn}
                 />
               </div>
             </CardContent>
