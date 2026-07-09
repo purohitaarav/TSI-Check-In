@@ -2,10 +2,16 @@ export interface Attendee {
   id: string;
   firstName: string;
   lastName: string;
-  email: string;
+  fullName: string;
+  searchName: string;
+  email?: string;
+  phone?: string;
+  shirtSize?: string;
   checkedIn: boolean;
-  checkInTime?: string;
-  // We can add more fields as we go (e.g. ticketType, etc.)
+  checkedInAt?: string | null;
+  checkedInBy?: string | null;
+  qrToken?: string;
+  registrationData?: Record<string, any>;
 }
 
 export interface UserState {

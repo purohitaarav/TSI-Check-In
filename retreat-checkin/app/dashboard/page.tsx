@@ -1,23 +1,65 @@
 "use client";
 
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Clock, Percent, Search } from "lucide-react";
+import { Users, UserCheck, Clock, Percent, Search, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { firestoreService } from "@/lib/services/firestore";
+import { Attendee } from "@/types";
+import { AttendeeList } from "@/components/AttendeeList";
+import { ImportAttendeesModal } from "@/components/ImportAttendeesModal";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [attendees, setAttendees] = useState<Attendee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // We are assuming a single "default-event" for MVP
+  const EVENT_ID = "default-event";
+
+  const fetchAttendees = async () => {
+    setLoading(true);
+    try {
+      const data = await firestoreService.getAttendeesForEvent(EVENT_ID);
+      setAttendees(data);
+    } catch (error) {
+      console.error("Failed to fetch attendees:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAttendees();
+  }, []);
+
+  const totalAttendees = attendees.length;
+  const checkedInCount = attendees.filter(a => a.checkedIn).length;
+  const pendingCount = totalAttendees - checkedInCount;
+  const checkinRate = totalAttendees > 0 ? Math.round((checkedInCount / totalAttendees) * 100) : 0;
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-semibold tracking-tight">Overview</h2>
-        <p className="text-sm text-muted-foreground">
-          Welcome back, {user?.displayName?.split(' ')[0] || "Volunteer"}. Here's what's happening today.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-semibold tracking-tight">Overview</h2>
+          <p className="text-sm text-muted-foreground">
+            Welcome back, {user?.displayName?.split(' ')[0] || "Volunteer"}. Here's what's happening today.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button onClick={() => setIsImportModalOpen(true)} className="gap-2">
+            <Download className="h-4 w-4" />
+            Import CSV
+          </Button>
+        </div>
       </div>
 
-      {/* Statistics Grid - Responsive with hover lifts */}
+      {/* Statistics Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -25,7 +67,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">0</div>
+            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : totalAttendees}</div>
             <p className="text-xs text-muted-foreground mt-1">Registered for the event</p>
           </CardContent>
         </Card>
@@ -36,7 +78,7 @@ export default function DashboardPage() {
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">0</div>
+            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : checkedInCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Currently on site</p>
           </CardContent>
         </Card>
@@ -47,7 +89,7 @@ export default function DashboardPage() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">0</div>
+            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : pendingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Awaiting arrival</p>
           </CardContent>
         </Card>
@@ -58,7 +100,7 @@ export default function DashboardPage() {
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">0%</div>
+            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : `${checkinRate}%`}</div>
             <p className="text-xs text-muted-foreground mt-1">Of total registered</p>
           </CardContent>
         </Card>
@@ -71,6 +113,8 @@ export default function DashboardPage() {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search attendees..." 
               className="w-full rounded-lg border border-input bg-background py-2 pl-10 pr-4 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
@@ -78,15 +122,21 @@ export default function DashboardPage() {
           <Badge variant="outline" className="hidden sm:inline-flex h-9 px-4 rounded-lg items-center justify-center text-sm font-medium">Filter</Badge>
         </div>
 
-        <Card className="min-h-[400px]">
-          <CardContent className="flex flex-col items-center justify-center h-[300px] text-muted-foreground space-y-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800">
-              <Users className="h-6 w-6 text-slate-400" />
-            </div>
-            <p className="text-sm font-medium">No attendees imported yet.</p>
-          </CardContent>
-        </Card>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
+          </div>
+        ) : (
+          <AttendeeList attendees={attendees} searchQuery={searchQuery} />
+        )}
       </div>
+
+      <ImportAttendeesModal 
+        isOpen={isImportModalOpen} 
+        onClose={() => setIsImportModalOpen(false)} 
+        onSuccess={fetchAttendees} 
+        eventId={EVENT_ID}
+      />
     </div>
   );
 }
