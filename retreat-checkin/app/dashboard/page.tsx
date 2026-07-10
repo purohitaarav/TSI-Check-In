@@ -304,7 +304,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-0">
+    <div className="flex flex-col gap-6 sm:gap-8">
       <div className="flex flex-col gap-2">
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{selectedEvent.name}</h2>
         <p className="text-muted-foreground text-sm sm:text-base">Manage your attendees, check-ins, and event configuration.</p>

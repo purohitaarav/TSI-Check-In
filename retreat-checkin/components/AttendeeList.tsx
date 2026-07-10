@@ -97,23 +97,23 @@ export function AttendeeList({
       </div>
 
       {/* Mobile Card View */}
-      <div className="flex flex-col gap-3 md:hidden">
+      <div className="flex flex-col gap-2 md:hidden">
         {filtered.map(attendee => (
           <Card key={attendee.id} className="overflow-hidden cursor-pointer" onClick={() => onSelectAttendee?.(attendee)}>
-            <CardContent className="p-4 flex flex-col gap-3">
+            <CardContent className="p-3 flex flex-col gap-2">
               <div className="flex flex-col">
                 <p className="font-semibold text-base">{attendee.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
 
                 {(attendee.email || attendee.phone) && (
-                  <div className="mt-2 text-sm text-muted-foreground">
+                  <div className="mt-1 text-sm text-muted-foreground">
                     {attendee.email && <div>{attendee.email}</div>}
                     {attendee.phone && <div>{attendee.phone}</div>}
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
+              <div className="flex items-center justify-between border-t border-border pt-2 mt-1">
                 <QuickCheckInButton
                   attendee={attendee}
                   onCheckIn={onCheckIn}

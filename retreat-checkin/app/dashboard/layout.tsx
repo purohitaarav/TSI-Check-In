@@ -73,7 +73,7 @@ export default function DashboardLayout({
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 animate-in fade-in duration-500">
+        <main className="flex-1 w-full max-w-full mx-auto p-2 sm:p-4 md:p-6 lg:p-8 animate-in fade-in duration-500">
           {children}
         </main>
         
