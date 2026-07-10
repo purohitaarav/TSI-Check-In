@@ -4,7 +4,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useEvent } from "@/components/providers/EventProvider";
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings, Link as LinkIcon, UploadCloud } from "lucide-react";
+import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings, Link as LinkIcon, UploadCloud, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { firestoreService } from "@/lib/services/firestore";
@@ -32,7 +32,6 @@ export default function DashboardPage() {
   const [selectedAttendee, setSelectedAttendee] = useState<Attendee | null>(null);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
-  const [fieldModalGroup, setFieldModalGroup] = useState<RegistrationGroup | null>(null);
   const [isImportEventModalOpen, setIsImportEventModalOpen] = useState(false);
 
   const fetchData = async () => {
@@ -210,21 +209,24 @@ export default function DashboardPage() {
     return Array.from(fields);
   };
 
-  const handleOpenFieldModal = (group: RegistrationGroup) => {
-    setFieldModalGroup(group);
-    setIsFieldModalOpen(true);
-  };
-
-  const handleSaveFields = async (fields: string[]) => {
-    if (!fieldModalGroup || !selectedEvent) return;
+  const handleSaveFields = async (groupId: string, fields: string[]) => {
+    if (!selectedEvent) return;
     try {
-      await firestoreService.updateRegistrationGroupFields(selectedEvent.id, fieldModalGroup.id, fields);
-      setGroups(prev => prev.map(g => g.id === fieldModalGroup.id ? { ...g, visibleFields: fields } : g));
+      await firestoreService.updateRegistrationGroupFields(selectedEvent.id, groupId, fields);
+      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, visibleFields: fields } : g));
       setIsFieldModalOpen(false);
     } catch (error) {
       console.error("Failed to update fields:", error);
     }
   };
+
+  const availableFieldsByGroup = useMemo(() => {
+    const map = new Map<string, string[]>();
+    groups.forEach(group => {
+      map.set(group.id, getAvailableFieldsForGroup(group.id));
+    });
+    return map;
+  }, [groups, attendees]);
 
   if (loadingEvents) {
     return (
@@ -443,16 +445,6 @@ export default function DashboardPage() {
                         >
                           <Pencil className="h-3 w-3" />
                         </button>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenFieldModal(group);
-                          }}
-                          className="ml-0.5 p-0.5 rounded-full hover:bg-primary/20 transition-colors text-primary-foreground/70 hover:text-primary-foreground"
-                          title="Group Settings"
-                        >
-                          <Settings className="h-3 w-3" />
-                        </button>
                       </div>
                     )}
                   </div>
@@ -467,7 +459,7 @@ export default function DashboardPage() {
         <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between mb-6">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input 
+            <input
               type="text"
               placeholder="Search attendees..."
               value={searchQuery}
@@ -475,35 +467,47 @@ export default function DashboardPage() {
               className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
-          
-          <div className="flex bg-muted/50 p-1 rounded-lg border border-border self-start lg:self-auto shrink-0">
-            <button
-              onClick={() => setStatusFilter("needs_check_in")}
-              className={cn(
-                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
-                statusFilter === "needs_check_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
+
+          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
+            <Button
+              onClick={() => setIsFieldModalOpen(true)}
+              variant="outline"
+              size="sm"
+              className="gap-2"
             >
-              Needs Check-In
-            </button>
-            <button
-              onClick={() => setStatusFilter("checked_in")}
-              className={cn(
-                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
-                statusFilter === "checked_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              Checked In
-            </button>
-            <button
-              onClick={() => setStatusFilter("all")}
-              className={cn(
-                "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
-                statusFilter === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              All
-            </button>
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Field Visibility</span>
+            </Button>
+
+            <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
+              <button
+                onClick={() => setStatusFilter("needs_check_in")}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                  statusFilter === "needs_check_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Needs Check-In
+              </button>
+              <button
+                onClick={() => setStatusFilter("checked_in")}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                  statusFilter === "checked_in" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Checked In
+              </button>
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={cn(
+                  "px-4 py-1.5 text-xs font-medium rounded-md transition-colors",
+                  statusFilter === "all" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                All
+              </button>
+            </div>
           </div>
         </div>
 
@@ -542,16 +546,13 @@ export default function DashboardPage() {
         visibleFields={selectedAttendee ? groups.find(g => g.id === selectedAttendee.registrationGroupId)?.visibleFields : undefined}
       />
 
-      {fieldModalGroup && (
-        <FieldCustomizationModal
-          isOpen={isFieldModalOpen}
-          onClose={() => setIsFieldModalOpen(false)}
-          groupName={fieldModalGroup.name}
-          availableFields={getAvailableFieldsForGroup(fieldModalGroup.id)}
-          initialSelectedFields={fieldModalGroup.visibleFields || []}
-          onSave={handleSaveFields}
-        />
-      )}
+      <FieldCustomizationModal
+        isOpen={isFieldModalOpen}
+        onClose={() => setIsFieldModalOpen(false)}
+        groups={groups}
+        availableFieldsByGroup={availableFieldsByGroup}
+        onSave={handleSaveFields}
+      />
     </div>
   );
 }
