@@ -9,9 +9,10 @@ interface QuickCheckInButtonProps {
   onCheckIn: (attendeeId: string) => void;
   isCheckingIn: boolean;
   className?: string;
+  size?: "sm" | "default" | "lg";
 }
 
-export function QuickCheckInButton({ attendee, onCheckIn, isCheckingIn, className = "" }: QuickCheckInButtonProps) {
+export function QuickCheckInButton({ attendee, onCheckIn, isCheckingIn, className = "", size = "sm" }: QuickCheckInButtonProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!attendee.checkedIn && !isCheckingIn) {
@@ -35,7 +36,7 @@ export function QuickCheckInButton({ attendee, onCheckIn, isCheckingIn, classNam
 
   return (
     <Button
-      size="sm"
+      size={size}
       onClick={handleClick}
       disabled={isCheckingIn}
       className={`gap-1.5 ${className}`}

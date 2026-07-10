@@ -62,19 +62,13 @@ export function AttendeeList({
                   <p className="font-semibold text-base">{attendee.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
                 </div>
-
-                {(attendee.email || attendee.phone) && (
-                  <div className="text-sm text-muted-foreground">
-                    {attendee.email && <div>{attendee.email}</div>}
-                    {attendee.phone && <div>{attendee.phone}</div>}
-                  </div>
-                )}
               </div>
 
               <QuickCheckInButton
                 attendee={attendee}
                 onCheckIn={onCheckIn}
                 isCheckingIn={isCheckingIn}
+                size="lg"
               />
             </CardContent>
           </Card>
@@ -89,13 +83,6 @@ export function AttendeeList({
               <div className="flex flex-col">
                 <p className="font-semibold text-base">{attendee.name}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
-
-                {(attendee.email || attendee.phone) && (
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {attendee.email && <div>{attendee.email}</div>}
-                    {attendee.phone && <div>{attendee.phone}</div>}
-                  </div>
-                )}
               </div>
 
               <div className="flex items-center justify-between border-t border-border pt-2 mt-1">
