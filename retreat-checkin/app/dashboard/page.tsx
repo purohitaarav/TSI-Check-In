@@ -251,7 +251,11 @@ export default function DashboardPage() {
             <LinkIcon className="h-4 w-4 mr-2" />
             Connect Spreadsheet
           </Button>
-          <Button onClick={() => setIsImportEventModalOpen(true)} size="lg" variant="outline">
+          <Button 
+            onClick={() => setIsImportEventModalOpen(true)} 
+            size="lg" 
+            variant="outline"
+          >
             <UploadCloud className="h-4 w-4 mr-2" />
             Import CSV
           </Button>
@@ -287,6 +291,11 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
+        
+        <ImportEventFromCSVModal
+          isOpen={isImportEventModalOpen}
+          onClose={() => setIsImportEventModalOpen(false)}
+        />
       </div>
     );
   }
@@ -520,11 +529,6 @@ export default function DashboardPage() {
         onClose={() => setIsImportModalOpen(false)} 
         onSuccess={fetchData} 
         eventId={selectedEvent.id}
-      />
-
-      <ImportEventFromCSVModal
-        isOpen={isImportEventModalOpen}
-        onClose={() => setIsImportEventModalOpen(false)}
       />
 
       <AttendeeModal 
