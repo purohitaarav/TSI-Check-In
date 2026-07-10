@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { requireAuthorizedUser } from '@/lib/services/apiAuth';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const authResult = await requireAuthorizedUser(req);
+  if (authResult instanceof NextResponse) return authResult;
+
   try {
     const { url } = await req.json();
 

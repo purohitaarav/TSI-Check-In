@@ -3,6 +3,12 @@ export interface GoogleSheetTabConfig {
   category: string;
 }
 
+export type UserRole = "admin" | "staff" | "readOnly";
+
+export interface AuthorizedUser {
+  email: string;
+}
+
 export interface Event {
   id: string;
   name: string;

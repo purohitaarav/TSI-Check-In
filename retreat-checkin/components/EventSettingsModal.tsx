@@ -11,6 +11,14 @@ import { RegistrationGroup, Event } from "@/types";
 import { toast } from "sonner";
 import { Loader2, Link as LinkIcon, Database, Check, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { auth } from "@/lib/firebase";
+
+async function getAuthHeaders(): Promise<HeadersInit> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return { 'Content-Type': 'application/json' };
+  const token = await currentUser.getIdToken();
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+}
 
 interface EventSettingsModalProps {
   isOpen: boolean;
@@ -79,7 +87,7 @@ export function EventSettingsModal({ isOpen, onClose }: EventSettingsModalProps)
     try {
       const response = await fetch('/api/google-sheets/inspect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ url }),
       });
 
@@ -177,7 +185,7 @@ export function EventSettingsModal({ isOpen, onClose }: EventSettingsModalProps)
       // 4. Trigger Attendee Sync
       const syncResponse = await fetch('/api/google-sheets/sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ 
           googleSheetId: spreadsheetInfo.id,
           tabs: finalTabConfigs

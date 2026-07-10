@@ -1,14 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Attendee, GoogleSheetTabConfig } from '@/types';
 import { generateSearchName } from '@/lib/utils/csv-schema';
+import { requireAuthorizedUser } from '@/lib/services/apiAuth';
 
 interface SyncRequest {
   googleSheetId: string;
   tabs: GoogleSheetTabConfig[];
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const authResult = await requireAuthorizedUser(req);
+  if (authResult instanceof NextResponse) return authResult;
+
   try {
     const { googleSheetId, tabs } = await req.json() as SyncRequest;
 
