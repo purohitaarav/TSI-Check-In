@@ -52,8 +52,8 @@ export function AttendeeList({
 
   return (
     <div className="flex flex-col">
-      {/* Desktop Card Grid View */}
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {/* Desktop Card View */}
+      <div className="hidden md:flex md:flex-col gap-3">
         {filtered.map(attendee => (
           <Card key={attendee.id} className="overflow-hidden cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all" onClick={() => onSelectAttendee?.(attendee)}>
             <CardContent className="p-4 flex flex-col gap-3">
