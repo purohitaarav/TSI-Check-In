@@ -4,13 +4,14 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useEvent } from "@/components/providers/EventProvider";
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings, Link as LinkIcon } from "lucide-react";
+import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings, Link as LinkIcon, UploadCloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { firestoreService } from "@/lib/services/firestore";
 import { Attendee, RegistrationGroup } from "@/types";
 import { AttendeeList } from "@/components/AttendeeList";
 import { ImportAttendeesModal } from "@/components/ImportAttendeesModal";
+import { ImportEventFromCSVModal } from "@/components/ImportEventFromCSVModal";
 import { AttendeeModal } from "@/components/AttendeeModal";
 import { FieldCustomizationModal } from "@/components/FieldCustomizationModal";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export default function DashboardPage() {
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const [fieldModalGroup, setFieldModalGroup] = useState<RegistrationGroup | null>(null);
+  const [isImportEventModalOpen, setIsImportEventModalOpen] = useState(false);
 
   const fetchData = async () => {
     if (!selectedEvent) return;
@@ -244,10 +246,16 @@ export default function DashboardPage() {
           To get started, select an active event or connect a new Google Spreadsheet to automatically create an event and import attendees.
         </p>
         
-        <Button onClick={() => window.dispatchEvent(new Event('open-settings-modal'))} className="mb-8" size="lg">
-          <LinkIcon className="h-4 w-4 mr-2" />
-          Connect Spreadsheet
-        </Button>
+        <div className="flex gap-4 mb-8">
+          <Button onClick={() => window.dispatchEvent(new Event('open-settings-modal'))} size="lg">
+            <LinkIcon className="h-4 w-4 mr-2" />
+            Connect Spreadsheet
+          </Button>
+          <Button onClick={() => setIsImportEventModalOpen(true)} size="lg" variant="outline">
+            <UploadCloud className="h-4 w-4 mr-2" />
+            Import CSV
+          </Button>
+        </div>
         </div>
         
         {events.length === 0 ? (
@@ -512,6 +520,11 @@ export default function DashboardPage() {
         onClose={() => setIsImportModalOpen(false)} 
         onSuccess={fetchData} 
         eventId={selectedEvent.id}
+      />
+
+      <ImportEventFromCSVModal
+        isOpen={isImportEventModalOpen}
+        onClose={() => setIsImportEventModalOpen(false)}
       />
 
       <AttendeeModal 
