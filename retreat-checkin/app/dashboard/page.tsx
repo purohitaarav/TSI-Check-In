@@ -377,14 +377,14 @@ export default function DashboardPage() {
                       onChange={(e) => setEditingGroupName(e.target.value)}
                       autoFocus
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleRenameSubmit(group.id);
+                        if (e.key === 'Enter') handleRenameGroup(group.id);
                         if (e.key === 'Escape') setEditingGroupId(null);
                       }}
                       className="bg-background text-foreground text-sm rounded px-2 py-1 w-32 outline-none focus:ring-2 focus:ring-ring"
                       onClick={(e) => e.stopPropagation()}
                     />
                     <button 
-                      onClick={(e) => { e.stopPropagation(); handleRenameSubmit(group.id); }}
+                      onClick={(e) => { e.stopPropagation(); handleRenameGroup(group.id); }}
                       className="p-1 rounded hover:bg-primary/20 text-primary-foreground"
                     >
                       <Check className="h-4 w-4" />
