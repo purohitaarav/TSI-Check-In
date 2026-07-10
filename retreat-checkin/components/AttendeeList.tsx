@@ -53,29 +53,29 @@ export function AttendeeList({
   return (
     <div className="flex flex-col">
       {/* Desktop Card View */}
-      <div className="hidden md:flex md:flex-col gap-3">
+      <div className="hidden md:flex md:flex-col gap-3 px-8">
         {filtered.map(attendee => (
           <Card key={attendee.id} className="overflow-hidden cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all" onClick={() => onSelectAttendee?.(attendee)}>
-            <CardContent className="p-4 flex flex-col gap-3">
-              <div className="flex flex-col">
-                <p className="font-semibold text-base">{attendee.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
+            <CardContent className="p-4 flex items-center justify-between gap-4">
+              <div className="flex-1 flex items-center gap-6">
+                <div className="flex flex-col">
+                  <p className="font-semibold text-base">{attendee.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
+                </div>
 
                 {(attendee.email || attendee.phone) && (
-                  <div className="mt-2 text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground">
                     {attendee.email && <div>{attendee.email}</div>}
                     {attendee.phone && <div>{attendee.phone}</div>}
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
-                <QuickCheckInButton
-                  attendee={attendee}
-                  onCheckIn={onCheckIn}
-                  isCheckingIn={isCheckingIn}
-                />
-              </div>
+              <QuickCheckInButton
+                attendee={attendee}
+                onCheckIn={onCheckIn}
+                isCheckingIn={isCheckingIn}
+              />
             </CardContent>
           </Card>
         ))}
