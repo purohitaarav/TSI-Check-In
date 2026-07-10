@@ -29,18 +29,6 @@ export const EventProvider = ({ children }: { children: React.ReactNode }) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
 
-  // Load selected event from localStorage on mount
-  useEffect(() => {
-    const savedEvent = localStorage.getItem("selectedEvent");
-    if (savedEvent) {
-      try {
-        setSelectedEvent(JSON.parse(savedEvent));
-      } catch (e) {
-        console.error("Failed to parse saved event", e);
-      }
-    }
-  }, []);
-
   const refreshEvents = async () => {
     setLoadingEvents(true);
     try {

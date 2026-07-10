@@ -42,18 +42,18 @@ export default function DashboardLayout({
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {selectedEvent && (
               <>
-                <Button onClick={() => window.dispatchEvent(new Event('open-import-modal'))} variant="ghost" size="sm" className="hidden md:flex gap-2 h-9 text-muted-foreground hover:text-foreground">
+                <Button onClick={() => window.dispatchEvent(new Event('open-import-modal'))} variant="ghost" size="sm" className="hidden sm:flex gap-2 h-9 text-muted-foreground hover:text-foreground">
                   <Download className="h-4 w-4" />
                   <span className="sr-only sm:not-sr-only">Import CSV</span>
                 </Button>
-                <Button onClick={clearEvent} variant="ghost" size="sm" className="hidden md:flex gap-2 h-9 text-muted-foreground hover:text-foreground">
+                <Button onClick={clearEvent} variant="ghost" size="sm" className="flex gap-2 h-9 text-muted-foreground hover:text-foreground">
                   <ArrowLeftRight className="h-4 w-4" />
-                  <span className="sr-only sm:not-sr-only">Change Event</span>
+                  <span className="hidden sm:inline">Change Event</span>
                 </Button>
-                <div className="h-4 w-px bg-border hidden md:block mx-1" />
+                <div className="h-4 w-px bg-border hidden sm:block mx-1" />
               </>
             )}
             <Button onClick={() => setIsSettingsOpen(true)} className="gap-2 h-9" size="sm">
