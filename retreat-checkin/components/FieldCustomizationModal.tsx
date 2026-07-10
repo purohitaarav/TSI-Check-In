@@ -58,29 +58,29 @@ export function FieldCustomizationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl bg-background rounded-xl shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl bg-background rounded-xl shadow-xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] sm:max-h-[85vh]">
 
-        <div className="flex items-center justify-between p-5 border-b border-border bg-card">
-          <h2 className="text-xl font-semibold">Field Visibility</h2>
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border bg-card">
+          <h2 className="text-lg sm:text-xl font-semibold">Field Visibility</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full h-8 w-8">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="p-5 flex-1 overflow-y-auto">
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="p-4 sm:p-5 flex-1 overflow-y-auto">
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4">
             Select the fields you want to display as columns for attendees in each group.
           </p>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {groups.map(group => {
               const availableFields = availableFieldsByGroup.get(group.id) || [];
               const groupSelectedFields = selectedFieldsByGroup.get(group.id) || new Set();
 
               return (
-                <div key={group.id} className="border border-border rounded-lg p-4">
-                  <h3 className="font-medium mb-3">{group.name}</h3>
+                <div key={group.id} className="border border-border rounded-lg p-3 sm:p-4">
+                  <h3 className="font-medium mb-2 sm:mb-3 text-sm sm:text-base">{group.name}</h3>
 
                   {availableFields.length > 0 ? (
                     <div className="flex flex-col gap-2">
@@ -93,7 +93,7 @@ export function FieldCustomizationModal({
                               e.preventDefault();
                               toggleField(group.id, field);
                             }}
-                            className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                            className={`flex items-center gap-3 p-2 sm:p-2.5 rounded-lg border cursor-pointer transition-colors ${
                               isSelected ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                             }`}
                           >
@@ -102,13 +102,13 @@ export function FieldCustomizationModal({
                             }`}>
                               {isSelected && <Check className="h-3 w-3" />}
                             </div>
-                            <span className="text-sm font-medium select-none">{field}</span>
+                            <span className="text-xs sm:text-sm font-medium select-none">{field}</span>
                           </label>
                         );
                       })}
                     </div>
                   ) : (
-                    <div className="text-sm text-muted-foreground italic text-center py-2">
+                    <div className="text-xs sm:text-sm text-muted-foreground italic text-center py-2">
                       No custom fields found for this group.
                     </div>
                   )}
@@ -117,16 +117,16 @@ export function FieldCustomizationModal({
             })}
 
             {groups.length === 0 && (
-              <div className="text-sm text-muted-foreground italic text-center py-8">
+              <div className="text-xs sm:text-sm text-muted-foreground italic text-center py-8">
                 No groups found.
               </div>
             )}
           </div>
         </div>
 
-        <div className="p-5 border-t border-border bg-muted/20 flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+        <div className="p-4 sm:p-5 border-t border-border bg-muted/20 flex justify-end gap-3">
+          <Button variant="ghost" onClick={onClose} className="text-sm sm:text-base">Cancel</Button>
+          <Button onClick={handleSave} className="text-sm sm:text-base">Save Changes</Button>
         </div>
       </div>
     </div>

@@ -163,26 +163,26 @@ export function ImportEventFromCSVModal({ isOpen, onClose }: ImportEventFromCSVM
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6 backdrop-blur-sm animate-in fade-in duration-200">
       <Card className="w-full max-w-md shadow-xl animate-in zoom-in-95 duration-200 border-border">
-        <CardHeader className="relative">
+        <CardHeader className="relative p-4 sm:p-6">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-4 rounded-full"
+            className="absolute right-3 sm:right-4 top-3 sm:top-4 rounded-full"
             onClick={onClose}
             disabled={isUploading}
           >
             <X className="h-4 w-4 text-muted-foreground" />
           </Button>
-          <CardTitle>Import Event from CSV</CardTitle>
-          <CardDescription>Create a new event and import attendees from CSV files.</CardDescription>
+          <CardTitle className="text-lg sm:text-xl">Import Event from CSV</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Create a new event and import attendees from CSV files.</CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-4 sm:p-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="event-name">Event Name</Label>
+              <Label htmlFor="event-name" className="text-sm">Event Name</Label>
               <Input
                 id="event-name"
                 placeholder="Enter event name"
@@ -194,11 +194,11 @@ export function ImportEventFromCSVModal({ isOpen, onClose }: ImportEventFromCSVM
 
             {!successCount && (
               <div
-                className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-8 transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer"
+                className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-6 sm:py-8 transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <UploadCloud className="h-8 w-8 text-muted-foreground mb-3" />
-                <p className="text-sm font-medium">Click to select CSV files</p>
+                <UploadCloud className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground mb-2 sm:mb-3" />
+                <p className="text-xs sm:text-sm font-medium">Click to select CSV files</p>
                 <p className="text-xs text-muted-foreground mt-1 text-center px-4">Each filename will be a registration group. Must include a 'Name' column.</p>
               </div>
             )}
@@ -206,7 +206,7 @@ export function ImportEventFromCSVModal({ isOpen, onClose }: ImportEventFromCSVM
             {files.length > 0 && !successCount && (
               <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
                 {files.map((file, i) => (
-                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-2.5 bg-muted/30">
+                  <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-2 sm:p-2.5 bg-muted/30">
                     <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
                       <FileText className="h-4 w-4" />
                     </div>
@@ -230,8 +230,8 @@ export function ImportEventFromCSVModal({ isOpen, onClose }: ImportEventFromCSVM
             )}
 
             {successCount > 0 && (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-lg bg-emerald-500/10 p-6 text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="h-12 w-12" />
+              <div className="flex flex-col items-center justify-center gap-3 rounded-lg bg-emerald-500/10 p-4 sm:p-6 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="h-10 w-10 sm:h-12 sm:w-12" />
                 <p className="text-sm font-medium">Successfully created event and imported {successCount} attendees!</p>
               </div>
             )}
@@ -247,11 +247,12 @@ export function ImportEventFromCSVModal({ isOpen, onClose }: ImportEventFromCSVM
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-end gap-3 border-t bg-muted/20 px-6 py-4">
-          <Button variant="ghost" onClick={onClose} disabled={isUploading}>Cancel</Button>
+        <CardFooter className="flex justify-end gap-3 border-t bg-muted/20 px-4 sm:px-6 py-4">
+          <Button variant="ghost" onClick={onClose} disabled={isUploading} className="text-sm sm:text-base">Cancel</Button>
           <Button
             onClick={handleImport}
             disabled={!eventName.trim() || files.length === 0 || isUploading || successCount > 0}
+            className="text-sm sm:text-base"
           >
             {isUploading ? "Creating Event..." : "Create Event & Import"}
           </Button>

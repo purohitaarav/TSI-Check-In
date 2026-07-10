@@ -241,50 +241,51 @@ export default function DashboardPage() {
 
   if (!selectedEvent) {
     return (
-      <div className="flex flex-col gap-8 max-w-4xl mx-auto mt-8">
-        <div className="flex flex-col items-center justify-center p-12 text-center border rounded-xl bg-muted/20 animate-in fade-in duration-500">
-        <h2 className="text-2xl font-bold tracking-tight mb-2">Welcome to TSI Check-In</h2>
-        <p className="text-muted-foreground mb-8 max-w-md">
+      <div className="flex flex-col gap-8 max-w-4xl mx-auto mt-4 px-4 sm:mt-8 sm:px-0">
+        <div className="flex flex-col items-center justify-center p-6 sm:p-12 text-center border rounded-xl bg-muted/20 animate-in fade-in duration-500">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight mb-2">Welcome to TSI Check-In</h2>
+        <p className="text-muted-foreground mb-6 sm:mb-8 max-w-md text-sm sm:text-base">
           To get started, select an active event or connect a new Google Spreadsheet to automatically create an event and import attendees.
         </p>
-        
-        <div className="flex gap-4 mb-8">
-          <Button onClick={() => window.dispatchEvent(new Event('open-settings-modal'))} size="lg">
+
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto mb-6 sm:mb-8">
+          <Button onClick={() => window.dispatchEvent(new Event('open-settings-modal'))} size="lg" className="w-full sm:w-auto">
             <LinkIcon className="h-4 w-4 mr-2" />
             Connect Spreadsheet
           </Button>
-          <Button 
-            onClick={() => setIsImportEventModalOpen(true)} 
-            size="lg" 
+          <Button
+            onClick={() => setIsImportEventModalOpen(true)}
+            size="lg"
             variant="outline"
+            className="w-full sm:w-auto"
           >
             <UploadCloud className="h-4 w-4 mr-2" />
             Import CSV
           </Button>
         </div>
         </div>
-        
+
         {events.length === 0 ? (
-          <Card className="p-12 text-center flex flex-col items-center gap-4">
+          <Card className="p-8 sm:p-12 text-center flex flex-col items-center gap-4">
             <div className="bg-indigo-100 dark:bg-indigo-900/30 p-4 rounded-full">
               <Settings className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <h3 className="text-xl font-medium">No Events Found</h3>
-            <p className="text-muted-foreground max-w-md">
+            <h3 className="text-lg sm:text-xl font-medium">No Events Found</h3>
+            <p className="text-muted-foreground max-w-md text-sm sm:text-base">
               There are no events currently available. Please contact an administrator to create one.
             </p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             {events.map((event) => (
-              <Card 
-                key={event.id} 
+              <Card
+                key={event.id}
                 className="cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group overflow-hidden"
                 onClick={() => selectEvent(event)}
               >
                 <div className="h-2 w-full bg-indigo-500/20 group-hover:bg-indigo-500 transition-colors" />
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-medium tracking-tight mb-2">{event.name}</h3>
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-base sm:text-lg font-medium tracking-tight mb-2">{event.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span className="bg-secondary px-2 py-1 rounded-md text-xs font-mono">{event.id}</span>
                   </div>
@@ -293,7 +294,7 @@ export default function DashboardPage() {
             ))}
           </div>
         )}
-        
+
         <ImportEventFromCSVModal
           isOpen={isImportEventModalOpen}
           onClose={() => setIsImportEventModalOpen(false)}
@@ -303,54 +304,54 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6 sm:gap-8 px-4 sm:px-0">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold tracking-tight">{selectedEvent.name}</h2>
-        <p className="text-muted-foreground">Manage your attendees, check-ins, and event configuration.</p>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{selectedEvent.name}</h2>
+        <p className="text-muted-foreground text-sm sm:text-base">Manage your attendees, check-ins, and event configuration.</p>
       </div>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4 mt-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Attendees</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Total Attendees</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : totalAttendees}</div>
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight">{loading ? "-" : totalAttendees}</div>
             <p className="text-xs text-muted-foreground mt-1">Registered for the event</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Checked In</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Checked In</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : checkedInCount}</div>
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight">{loading ? "-" : checkedInCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Currently on site</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Pending</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : pendingCount}</div>
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight">{loading ? "-" : pendingCount}</div>
             <p className="text-xs text-muted-foreground mt-1">Awaiting arrival</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Check-in Rate</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Check-in Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{loading ? "-" : `${checkinRate}%`}</div>
+            <div className="text-2xl sm:text-3xl font-bold tracking-tight">{loading ? "-" : `${checkinRate}%`}</div>
             <p className="text-xs text-muted-foreground mt-1">Of total registered</p>
           </CardContent>
         </Card>
@@ -363,26 +364,26 @@ export default function DashboardPage() {
           <button
             onClick={() => setActiveTab("all")}
             className={cn(
-              "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
-              activeTab === "all" 
-                ? "bg-primary text-primary-foreground shadow" 
+              "px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-colors",
+              activeTab === "all"
+                ? "bg-primary text-primary-foreground shadow"
                 : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
             )}
           >
             All Attendees
           </button>
-          
+
           {groups.map(group => {
             const isActive = activeTab === group.id;
             const isEditing = editingGroupId === group.id;
-            
+
             return (
-              <div 
+              <div
                 key={group.id}
                 className={cn(
                   "flex items-center rounded-full transition-colors group/tab",
                   isActive ? "bg-primary shadow" : "bg-muted hover:bg-muted/80",
-                  isEditing ? "px-2 py-1" : "px-4 py-2 cursor-pointer"
+                  isEditing ? "px-2 py-1" : "px-3 sm:px-4 py-2 cursor-pointer"
                 )}
                 onClick={() => {
                   if (!isEditing) setActiveTab(group.id);
@@ -390,8 +391,8 @@ export default function DashboardPage() {
               >
                 {isEditing ? (
                   <div className="flex items-center gap-2">
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={editingGroupName}
                       onChange={(e) => setEditingGroupName(e.target.value)}
                       autoFocus
@@ -399,10 +400,10 @@ export default function DashboardPage() {
                         if (e.key === 'Enter') handleRenameGroup(group.id);
                         if (e.key === 'Escape') setEditingGroupId(null);
                       }}
-                      className="bg-background text-foreground text-sm rounded px-2 py-1 w-32 outline-none focus:ring-2 focus:ring-ring"
+                      className="bg-background text-foreground text-sm rounded px-2 py-1 w-24 sm:w-32 outline-none focus:ring-2 focus:ring-ring"
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); handleRenameGroup(group.id); }}
                       className="p-1 rounded hover:bg-primary/20 text-primary-foreground"
                     >
@@ -427,14 +428,14 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex items-center gap-2">
                     <span className={cn(
-                      "text-sm font-medium whitespace-nowrap",
+                      "text-xs sm:text-sm font-medium whitespace-nowrap",
                       isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                     )}>
                       {group.name}
                     </span>
                     {isActive && (
                       <div className="flex items-center">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingGroupId(group.id);
@@ -454,9 +455,9 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <div className="flex flex-col flex-1 bg-muted/10 p-4 sm:p-6 rounded-b-2xl border-x border-b border-border min-h-[500px]">
-        
-        <div className="flex flex-col lg:flex-row gap-4 lg:items-center justify-between mb-6">
+        <div className="flex flex-col flex-1 bg-muted/10 p-4 sm:p-6 rounded-b-2xl border-x border-b border-border min-h-[400px] sm:min-h-[500px]">
+
+        <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-6">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
@@ -468,18 +469,18 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto shrink-0">
             <Button
               onClick={() => setIsFieldModalOpen(true)}
               variant="outline"
               size="sm"
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">Field Visibility</span>
             </Button>
 
-            <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
+            <div className="flex bg-muted/50 p-1 rounded-lg border border-border w-full sm:w-auto">
               <button
                 onClick={() => setStatusFilter("needs_check_in")}
                 className={cn(
