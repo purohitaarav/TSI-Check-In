@@ -1,3 +1,15 @@
+export interface GoogleSheetTabConfig {
+  tabName: string;
+  category: string;
+}
+
+export interface Event {
+  id: string;
+  name: string;
+  googleSheetId?: string;
+  googleSheets?: GoogleSheetTabConfig[];
+}
+
 export interface RegistrationGroup {
   id: string;
   name: string;
@@ -16,6 +28,12 @@ export interface Attendee {
   qrToken?: string;
   registrationGroupId: string; // The ID of the group, so renaming is easy
   registrationData?: Record<string, any>;
+  
+  // Import metadata
+  source?: "google_sheet" | "csv" | "manual";
+  externalId?: string;
+  importedAt?: string;
+  lastSyncedAt?: string;
 }
 
 export interface UserState {

@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useEvent } from "@/components/providers/EventProvider";
 import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings } from "lucide-react";
+import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, Trash2, Settings, Link as LinkIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { firestoreService } from "@/lib/services/firestore";
@@ -17,9 +18,10 @@ import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { selectedEvent, events, loadingEvents, selectEvent } = useEvent();
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [groups, setGroups] = useState<RegistrationGroup[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -31,14 +33,13 @@ export default function DashboardPage() {
   const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
   const [fieldModalGroup, setFieldModalGroup] = useState<RegistrationGroup | null>(null);
 
-  const EVENT_ID = "default-event";
-
   const fetchData = async () => {
+    if (!selectedEvent) return;
     setLoading(true);
     try {
       const [fetchedAttendees, fetchedGroups] = await Promise.all([
-        firestoreService.getAttendeesForEvent(EVENT_ID),
-        firestoreService.getRegistrationGroups(EVENT_ID)
+        firestoreService.getAttendeesForEvent(selectedEvent.id),
+        firestoreService.getRegistrationGroups(selectedEvent.id)
       ]);
       setAttendees(fetchedAttendees);
       setGroups(fetchedGroups);
@@ -50,8 +51,13 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (selectedEvent) {
+      fetchData();
+    } else {
+      setAttendees([]);
+      setGroups([]);
+    }
+  }, [selectedEvent?.id]);
 
   useEffect(() => {
     const handleOpenModal = () => setIsImportModalOpen(true);
@@ -81,18 +87,21 @@ export default function DashboardPage() {
     return map;
   }, [groups]);
 
-  const totalAttendees = tabFilteredAttendees.length;
-  const checkedInCount = tabFilteredAttendees.filter(a => a.checkedIn).length;
+  const groupFilteredAttendees = useMemo(() => {
+    return activeTab === "all" 
+      ? attendees 
+      : attendees.filter(a => a.registrationGroupId === activeTab);
+  }, [attendees, activeTab]);
+
+  const totalAttendees = groupFilteredAttendees.length;
+  const checkedInCount = groupFilteredAttendees.filter(a => a.checkedIn).length;
   const pendingCount = totalAttendees - checkedInCount;
   const checkinRate = totalAttendees > 0 ? Math.round((checkedInCount / totalAttendees) * 100) : 0;
 
-  const handleRenameSubmit = async (groupId: string) => {
-    if (!editingGroupName.trim()) {
-      setEditingGroupId(null);
-      return;
-    }
+  const handleRenameGroup = async (groupId: string) => {
+    if (!editingGroupName.trim() || !selectedEvent) return;
     try {
-      await firestoreService.renameRegistrationGroup(EVENT_ID, groupId, editingGroupName.trim());
+      await firestoreService.renameRegistrationGroup(selectedEvent.id, groupId, editingGroupName.trim());
       setGroups(prev => prev.map(g => g.id === groupId ? { ...g, name: editingGroupName.trim() } : g));
       setEditingGroupId(null);
     } catch (error) {
@@ -101,12 +110,13 @@ export default function DashboardPage() {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
+    if (!selectedEvent) return;
     if (!confirm("Are you sure you want to delete this group? All attendees in this group will be deleted as well.")) {
       return;
     }
     
     try {
-      await firestoreService.deleteRegistrationGroup(EVENT_ID, groupId);
+      await firestoreService.deleteRegistrationGroup(selectedEvent.id, groupId);
       setGroups(prev => prev.filter(g => g.id !== groupId));
       setAttendees(prev => prev.filter(a => a.registrationGroupId !== groupId));
       setEditingGroupId(null);
@@ -119,11 +129,11 @@ export default function DashboardPage() {
   };
 
   const handleCheckIn = async (attendeeId: string) => {
-    if (!user) return;
+    if (!user || !selectedEvent) return;
     setIsCheckingIn(true);
     const identifier = user.email || user.uid;
     try {
-      await firestoreService.checkInAttendee(EVENT_ID, attendeeId, identifier);
+      await firestoreService.checkInAttendee(selectedEvent.id, attendeeId, identifier);
       setAttendees(prev => prev.map(a => 
         a.id === attendeeId ? { ...a, checkedIn: true, checkedInAt: new Date().toISOString(), checkedInBy: identifier } : a
       ));
@@ -157,11 +167,11 @@ export default function DashboardPage() {
   };
 
   const handleUndoCheckIn = async (attendeeId: string) => {
-    if (!user) return;
+    if (!user || !selectedEvent) return;
     setIsCheckingIn(true);
     const identifier = user.email || user.uid;
     try {
-      await firestoreService.undoCheckInAttendee(EVENT_ID, attendeeId, identifier);
+      await firestoreService.undoCheckInAttendee(selectedEvent.id, attendeeId, identifier);
       setAttendees(prev => prev.map(a => 
         a.id === attendeeId ? { ...a, checkedIn: false, checkedInAt: null, checkedInBy: null } : a
       ));
@@ -204,9 +214,9 @@ export default function DashboardPage() {
   };
 
   const handleSaveFields = async (fields: string[]) => {
-    if (!fieldModalGroup) return;
+    if (!fieldModalGroup || !selectedEvent) return;
     try {
-      await firestoreService.updateRegistrationGroupFields(EVENT_ID, fieldModalGroup.id, fields);
+      await firestoreService.updateRegistrationGroupFields(selectedEvent.id, fieldModalGroup.id, fields);
       setGroups(prev => prev.map(g => g.id === fieldModalGroup.id ? { ...g, visibleFields: fields } : g));
       setIsFieldModalOpen(false);
     } catch (error) {
@@ -214,8 +224,72 @@ export default function DashboardPage() {
     }
   };
 
+  if (loadingEvents) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <p className="text-muted-foreground">Loading events...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedEvent) {
+    return (
+      <div className="flex flex-col gap-8 max-w-4xl mx-auto mt-8">
+        <div className="flex flex-col items-center justify-center p-12 text-center border rounded-xl bg-muted/20 animate-in fade-in duration-500">
+        <h2 className="text-2xl font-bold tracking-tight mb-2">Welcome to TSI Check-In</h2>
+        <p className="text-muted-foreground mb-8 max-w-md">
+          To get started, select an active event or connect a new Google Spreadsheet to automatically create an event and import attendees.
+        </p>
+        
+        <Button onClick={() => window.dispatchEvent(new Event('open-settings-modal'))} className="mb-8" size="lg">
+          <LinkIcon className="h-4 w-4 mr-2" />
+          Connect Spreadsheet
+        </Button>
+        </div>
+        
+        {events.length === 0 ? (
+          <Card className="p-12 text-center flex flex-col items-center gap-4">
+            <div className="bg-indigo-100 dark:bg-indigo-900/30 p-4 rounded-full">
+              <Settings className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <h3 className="text-xl font-medium">No Events Found</h3>
+            <p className="text-muted-foreground max-w-md">
+              There are no events currently available. Please contact an administrator to create one.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {events.map((event) => (
+              <Card 
+                key={event.id} 
+                className="cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group overflow-hidden"
+                onClick={() => selectEvent(event)}
+              >
+                <div className="h-2 w-full bg-indigo-500/20 group-hover:bg-indigo-500 transition-colors" />
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-medium tracking-tight mb-2">{event.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="bg-secondary px-2 py-1 rounded-md text-xs font-mono">{event.id}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight">{selectedEvent.name}</h2>
+        <p className="text-muted-foreground">Manage your attendees, check-ins, and event configuration.</p>
+      </div>
+
       {/* Statistics Grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-2">
         <Card>
@@ -437,7 +511,7 @@ export default function DashboardPage() {
         isOpen={isImportModalOpen} 
         onClose={() => setIsImportModalOpen(false)} 
         onSuccess={fetchData} 
-        eventId={EVENT_ID}
+        eventId={selectedEvent.id}
       />
 
       <AttendeeModal 

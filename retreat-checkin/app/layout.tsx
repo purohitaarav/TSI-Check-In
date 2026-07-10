@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { EventProvider } from "@/components/providers/EventProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
 
@@ -39,9 +40,11 @@ export default function RootLayout({
           disableTransitionOnChange={false}
         >
           <AuthProvider>
-            <main className="flex-1 w-full min-h-screen relative flex flex-col">
-              {children}
-            </main>
+            <EventProvider>
+              <main className="flex-1 w-full min-h-screen relative flex flex-col">
+                {children}
+              </main>
+            </EventProvider>
           </AuthProvider>
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
