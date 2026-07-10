@@ -52,48 +52,33 @@ export function AttendeeList({
 
   return (
     <div className="flex flex-col">
-      {/* Desktop Table View */}
-      <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-semibold tracking-wider border-b border-border">
-              <tr>
-                <th className="px-5 py-4">Name</th>
-                <th className="px-5 py-4">Group</th>
-                <th className="px-5 py-4">Contact</th>
-                <th className="px-5 py-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map(attendee => (
-                <tr
-                  key={attendee.id}
-                  className="hover:bg-muted/50 cursor-pointer transition-colors group"
-                  onClick={() => onSelectAttendee?.(attendee)}
-                >
-                  <td className="px-5 py-3 font-medium text-foreground">{attendee.name}</td>
-                  <td className="px-5 py-3 text-muted-foreground">{groupMap.get(attendee.registrationGroupId) || "Unknown Group"}</td>
-                  <td className="px-5 py-3 text-muted-foreground">
-                    <div className="flex flex-col">
-                      {attendee.email && <span>{attendee.email}</span>}
-                      {attendee.phone && <span className="opacity-70">{attendee.phone}</span>}
-                      {!attendee.email && !attendee.phone && <span className="opacity-40">-</span>}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-right">
-                    <div className="flex justify-end">
-                      <QuickCheckInButton
-                        attendee={attendee}
-                        onCheckIn={onCheckIn}
-                        isCheckingIn={isCheckingIn}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Desktop Card Grid View */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filtered.map(attendee => (
+          <Card key={attendee.id} className="overflow-hidden cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all" onClick={() => onSelectAttendee?.(attendee)}>
+            <CardContent className="p-4 flex flex-col gap-3">
+              <div className="flex flex-col">
+                <p className="font-semibold text-base">{attendee.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{groupMap.get(attendee.registrationGroupId)}</p>
+
+                {(attendee.email || attendee.phone) && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {attendee.email && <div>{attendee.email}</div>}
+                    {attendee.phone && <div>{attendee.phone}</div>}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-border pt-3 mt-1">
+                <QuickCheckInButton
+                  attendee={attendee}
+                  onCheckIn={onCheckIn}
+                  isCheckingIn={isCheckingIn}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Mobile Card View */}
