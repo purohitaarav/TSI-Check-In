@@ -8,7 +8,7 @@ import { Users, UserCheck, Clock, Percent, Search, Download, Pencil, Check, X, T
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { firestoreService } from "@/lib/services/firestore";
-import { Attendee, RegistrationGroup } from "@/types";
+import { Attendee, RegistrationGroup, type Event } from "@/types";
 import { AttendeeList } from "@/components/AttendeeList";
 import { ImportAttendeesModal } from "@/components/ImportAttendeesModal";
 import { ImportEventFromCSVModal } from "@/components/ImportEventFromCSVModal";
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { selectedEvent, events, loadingEvents, selectEvent } = useEvent();
+  const { selectedEvent, events, loadingEvents, selectEvent, clearEvent, refreshEvents } = useEvent();
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [groups, setGroups] = useState<RegistrationGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -220,6 +220,22 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteEvent = async (eventId: string, event: Event) => {
+    if (!confirm(`Are you sure you want to delete "${event.name}"? This will delete all attendees, groups, and check-in data for this event. This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await firestoreService.deleteEvent(eventId);
+      await refreshEvents();
+      if (selectedEvent?.id === eventId) {
+        clearEvent();
+      }
+    } catch (error) {
+      console.error("Failed to delete event:", error);
+    }
+  };
+
   const availableFieldsByGroup = useMemo(() => {
     const map = new Map<string, string[]>();
     groups.forEach(group => {
@@ -285,9 +301,23 @@ export default function DashboardPage() {
               >
                 <div className="h-2 w-full bg-indigo-500/20 group-hover:bg-indigo-500 transition-colors" />
                 <CardContent className="p-4 sm:p-6">
-                  <h3 className="text-base sm:text-lg font-medium tracking-tight mb-2">{event.name}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="bg-secondary px-2 py-1 rounded-md text-xs font-mono">{event.id}</span>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-base sm:text-lg font-medium tracking-tight mb-2">{event.name}</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="bg-secondary px-2 py-1 rounded-md text-xs font-mono">{event.id}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteEvent(event.id, event);
+                      }}
+                      className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      title="Delete event"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </CardContent>
               </Card>

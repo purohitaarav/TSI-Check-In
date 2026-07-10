@@ -260,13 +260,13 @@ export const firestoreService = {
     const attendeesRef = collection(db, `events/${eventId}/attendees`);
     const q = query(attendeesRef, where("registrationGroupId", "==", groupId));
     const querySnapshot = await getDocs(q);
-    
+
     // Process in batches if there are many attendees
     const chunks = [];
     for (let i = 0; i < querySnapshot.docs.length; i += 490) {
       chunks.push(querySnapshot.docs.slice(i, i + 490));
     }
-    
+
     for (const chunk of chunks) {
       const batch = writeBatch(db);
       for (const docSnapshot of chunk) {
@@ -278,5 +278,62 @@ export const firestoreService = {
     // 2. Delete the group document
     const groupRef = doc(db, `events/${eventId}/registrationGroups`, groupId);
     await deleteDoc(groupRef);
+  },
+
+  async deleteEvent(eventId: string): Promise<void> {
+    // 1. Delete all attendees
+    const attendeesRef = collection(db, `events/${eventId}/attendees`);
+    const attendeesSnapshot = await getDocs(attendeesRef);
+
+    const attendeeChunks = [];
+    for (let i = 0; i < attendeesSnapshot.docs.length; i += 490) {
+      attendeeChunks.push(attendeesSnapshot.docs.slice(i, i + 490));
+    }
+
+    for (const chunk of attendeeChunks) {
+      const batch = writeBatch(db);
+      for (const docSnapshot of chunk) {
+        batch.delete(docSnapshot.ref);
+      }
+      await batch.commit();
+    }
+
+    // 2. Delete all registration groups
+    const groupsRef = collection(db, `events/${eventId}/registrationGroups`);
+    const groupsSnapshot = await getDocs(groupsRef);
+
+    const groupChunks = [];
+    for (let i = 0; i < groupsSnapshot.docs.length; i += 490) {
+      groupChunks.push(groupsSnapshot.docs.slice(i, i + 490));
+    }
+
+    for (const chunk of groupChunks) {
+      const batch = writeBatch(db);
+      for (const docSnapshot of chunk) {
+        batch.delete(docSnapshot.ref);
+      }
+      await batch.commit();
+    }
+
+    // 3. Delete all check-in logs
+    const checkinsRef = collection(db, `events/${eventId}/checkins`);
+    const checkinsSnapshot = await getDocs(checkinsRef);
+
+    const checkinChunks = [];
+    for (let i = 0; i < checkinsSnapshot.docs.length; i += 490) {
+      checkinChunks.push(checkinsSnapshot.docs.slice(i, i + 490));
+    }
+
+    for (const chunk of checkinChunks) {
+      const batch = writeBatch(db);
+      for (const docSnapshot of chunk) {
+        batch.delete(docSnapshot.ref);
+      }
+      await batch.commit();
+    }
+
+    // 4. Delete the event document
+    const eventRef = doc(db, `events`, eventId);
+    await deleteDoc(eventRef);
   }
 };
