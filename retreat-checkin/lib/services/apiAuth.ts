@@ -10,6 +10,7 @@ function getAdminApp(): App {
     return getApps()[0];
   }
 
+
   const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
   const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n");
   const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -22,6 +23,11 @@ function getAdminApp(): App {
     credential: cert({ clientEmail, privateKey, projectId }),
     projectId,
   });
+
+  console.log("Firebase Admin Config:", {
+  projectId,
+  clientEmail,
+});
 }
 
 /**
