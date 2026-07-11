@@ -10,11 +10,19 @@ interface SyncRequest {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('Sync API called');
+
   const authResult = await requireAuthorizedUser(req);
-  if (authResult instanceof NextResponse) return authResult;
+  if (authResult instanceof NextResponse) {
+    console.log('Auth failed:', authResult);
+    return authResult;
+  }
+
+  console.log('Auth passed');
 
   try {
     const { googleSheetId, tabs } = await req.json() as SyncRequest;
+    console.log('Request data:', { googleSheetId, tabs });
 
     if (!googleSheetId || !tabs || tabs.length === 0) {
       return NextResponse.json({ error: 'Missing googleSheetId or tabs' }, { status: 400 });
@@ -42,10 +50,22 @@ export async function POST(req: NextRequest) {
 
     for (const tab of tabs) {
       // Fetch data for the tab
-      const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: googleSheetId,
-        range: `${tab.tabName}!A1:Z1000`, // Fetch up to Z1000 to be safe
-      });
+      let response;
+      try {
+        response = await sheets.spreadsheets.values.get({
+          spreadsheetId: googleSheetId,
+          range: `${tab.tabName}!A1:Z1000`, // Fetch up to Z1000 to be safe
+        });
+      } catch (sheetError: any) {
+        console.error(`Error fetching tab ${tab.tabName}:`, sheetError);
+        if (sheetError.code === 404) {
+          return NextResponse.json({ error: `Tab "${tab.tabName}" not found in spreadsheet` }, { status: 400 });
+        }
+        if (sheetError.code === 403) {
+          return NextResponse.json({ error: `Access denied to tab "${tab.tabName}". Check spreadsheet permissions.` }, { status: 403 });
+        }
+        return NextResponse.json({ error: `Failed to fetch tab "${tab.tabName}": ${sheetError.message}` }, { status: 500 });
+      }
 
       const rows = response.data.values;
       if (!rows || rows.length < 2) continue; // Skip if no data (need at least headers and 1 row)

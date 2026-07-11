@@ -183,16 +183,27 @@ export function EventSettingsModal({ isOpen, onClose }: EventSettingsModalProps)
       toast.success(isNewEvent ? "Event created! Syncing attendees..." : "Settings saved! Syncing attendees...");
 
       // 4. Trigger Attendee Sync
+      console.log('Starting sync with:', { googleSheetId: spreadsheetInfo.id, tabs: finalTabConfigs });
       const syncResponse = await fetch('/api/google-sheets/sync', {
         method: 'POST',
         headers: await getAuthHeaders(),
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           googleSheetId: spreadsheetInfo.id,
           tabs: finalTabConfigs
         }),
       });
 
-      const syncData = await syncResponse.json();
+      console.log('Sync response status:', syncResponse.status);
+      const responseText = await syncResponse.text();
+      console.log('Sync response text:', responseText);
+
+      let syncData;
+      try {
+        syncData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse sync response as JSON:', responseText);
+        throw new Error('Invalid response from sync API');
+      }
       
       if (!syncResponse.ok) {
         throw new Error(syncData.error || "Failed to fetch attendees from Google Sheets");
