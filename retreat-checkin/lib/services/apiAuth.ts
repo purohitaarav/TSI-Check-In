@@ -52,12 +52,23 @@ async function verifyIdToken(request: NextRequest) {
  * Check the authorizedUsers collection in Firestore via Admin SDK.
  */
 async function getAuthorizedUserAdmin(email: string): Promise<AuthorizedUser | null> {
-  const adminApp = getAdminApp();
-  const adminDb = getFirestore(adminApp);
-  const docRef = adminDb.collection("authorizedUsers").doc(email.toLowerCase().trim());
-  const docSnap = await docRef.get();
-  if (!docSnap.exists) return null;
-  return { email: email.toLowerCase().trim() };
+  try {
+    const adminApp = getAdminApp();
+    const adminDb = getFirestore(adminApp);
+    const docRef = adminDb.collection("authorizedUsers").doc(email.toLowerCase().trim());
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) return null;
+    return { email: email.toLowerCase().trim() };
+  } catch (error: any) {
+    if (error.code === 7 || error.message?.includes("PERMISSION_DENIED")) {
+      const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+      const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+      throw new Error(
+        `Firestore access denied (PERMISSION_DENIED). The service account "${clientEmail}" does not have permission to access Firestore in project "${projectId}". Ensure it has been added to the IAM console of "${projectId}" with the "Cloud Datastore User" or "Firebase Firestore Admin" role.`
+      );
+    }
+    throw error;
+  }
 }
 
 /**
