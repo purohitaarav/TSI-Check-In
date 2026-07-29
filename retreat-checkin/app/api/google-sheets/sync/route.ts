@@ -12,15 +12,15 @@ interface SyncRequest {
 export async function POST(req: NextRequest) {
   console.log('Sync API called');
 
-  const authResult = await requireAuthorizedUser(req);
-  if (authResult instanceof NextResponse) {
-    console.log('Auth failed:', authResult);
-    return authResult;
-  }
-
-  console.log('Auth passed');
-
   try {
+    const authResult = await requireAuthorizedUser(req);
+    if (authResult instanceof NextResponse) {
+      console.log('Auth failed:', authResult);
+      return authResult;
+    }
+
+    console.log('Auth passed');
+
     const { googleSheetId, tabs } = await req.json() as SyncRequest;
     console.log('Request data:', { googleSheetId, tabs });
 

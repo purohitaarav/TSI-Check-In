@@ -73,23 +73,28 @@ async function getAuthorizedUserAdmin(email: string): Promise<AuthorizedUser | n
 export async function requireAuthorizedUser(
   request: NextRequest
 ): Promise<AuthorizedUser | NextResponse> {
-  // 1. Verify the Firebase ID token
-  const decodedToken = await verifyIdToken(request);
-  if (!decodedToken || !decodedToken.email) {
-    return NextResponse.json(
-      { error: "Unauthorized: No valid authentication token provided." },
-      { status: 401 }
-    );
-  }
+  try {
+    // 1. Verify the Firebase ID token
+    const decodedToken = await verifyIdToken(request);
+    if (!decodedToken || !decodedToken.email) {
+      return NextResponse.json(
+        { error: "Unauthorized: No valid authentication token provided." },
+        { status: 401 }
+      );
+    }
 
-  // 2. Check the authorizedUsers collection
-  const authorizedUser = await getAuthorizedUserAdmin(decodedToken.email);
-  if (!authorizedUser) {
-    return NextResponse.json(
-      { error: "Forbidden: Your account is not authorized to access this application." },
-      { status: 403 }
-    );
-  }
+    // 2. Check the authorizedUsers collection
+    const authorizedUser = await getAuthorizedUserAdmin(decodedToken.email);
+    if (!authorizedUser) {
+      return NextResponse.json(
+        { error: "Forbidden: Your account is not authorized to access this application." },
+        { status: 403 }
+      );
+    }
 
-  return authorizedUser;
+    return authorizedUser;
+  } catch (error: any) {
+    console.error("Firebase admin auth/firestore query failed:", error);
+    throw new Error(`Authentication/Authorization system error: ${error.message || error}`);
+  }
 }

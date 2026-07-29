@@ -3,10 +3,10 @@ import { google } from 'googleapis';
 import { requireAuthorizedUser } from '@/lib/services/apiAuth';
 
 export async function POST(req: NextRequest) {
-  const authResult = await requireAuthorizedUser(req);
-  if (authResult instanceof NextResponse) return authResult;
-
   try {
+    const authResult = await requireAuthorizedUser(req);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { url } = await req.json();
 
     if (!url) {
